@@ -1,19 +1,25 @@
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import PublicRoute from '../components/auth/PublicRoute';
-import PrivateRoute from '../components/auth/PrivateRoute';
+import React, { Suspense, lazy } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import PublicRoute from "../components/auth/PublicRoute";
+import PrivateRoute from "../components/auth/PrivateRoute";
 
 // Lazy load Pages
-const Login = lazy(() => import('../pages/Auth/login/Login'));
-const Register = lazy(() => import('../pages/Auth/register/Register'));
-const Dashboard = lazy(() => import('../pages/dashboard/Dashboard'));
-const Profile = lazy(() => import('../pages/profile/Profile'));
-const NotFound = lazy(() => import('../pages/not-found/NotFound'));
+const Login = lazy(() => import("../pages/Auth/login/Login"));
+const Register = lazy(() => import("../pages/Auth/register/Register"));
+const Dashboard = lazy(() => import("../pages/dashboard/Dashboard"));
+const Profile = lazy(() => import("../pages/profile/Profile"));
+const NotFound = lazy(() => import("../pages/not-found/NotFound"));
 
 const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter>
-      <Suspense fallback={<div className="flex items-center justify-center h-screen text-2xl font-semibold text-primary">Loading...</div>}>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-screen text-2xl font-semibold text-slate-200">
+            Loading...
+          </div>
+        }
+      >
         <Routes>
           {/* Public Routes */}
           <Route element={<PublicRoute />}>
@@ -28,7 +34,7 @@ const AppRoutes: React.FC = () => {
           </Route>
 
           {/* Default Redirect */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* 404 Not Found */}
           <Route path="*" element={<NotFound />} />

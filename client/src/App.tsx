@@ -1,9 +1,8 @@
-import './App.css'
-import AppRoutes from './routes'
+import AppRoutes from "./routes";
 
 export default function App() {
   return (
-    <div className="w-full h-full">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
       <AppRoutes />
     </div>
   );
