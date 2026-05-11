@@ -4,13 +4,50 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  NEW    
+  ACTIVE
+  PENDING
+  REMIND
+  REMINDED
+  DONE
+  CANCELLED
+}
+
+enum TaskCategory {
+  HOMEWORK
+  WORK
+  HOUSEWORK
+  PERSONAL
+  HEALTH
+  FAMILY
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("USER")
+  active    Boolean  @default(false)
+  avatar    String?
+  tasks     Task[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Task {
-  id          Int      @id @default(autoincrement())
-  title       String   @db.VarChar(255)
-  description String?  @db.Text
-  status      String   @default("pending")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int          @id @default(autoincrement())
+  title        String       @db.VarChar(255)
+  description  String?      @db.Text
+  status       TaskStatus   @default(NEW)
+  category     TaskCategory @default(PERSONAL)
+  scheduleDate DateTime?
+  userId       Int
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 }
