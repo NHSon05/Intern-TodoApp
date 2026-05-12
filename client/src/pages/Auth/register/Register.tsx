@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
 import AuthCard from "../../../components/ui/AuthCard";
 import AuthHeader from "../../../components/ui/AuthHeader";
 import PasswordInput from "../../../components/ui/PasswordInput";
@@ -19,7 +20,7 @@ interface RegisterErrors {
   confirmPassword?: string;
 }
 
-const defaultValues: RegisterForm = {
+const initialValues: RegisterForm = {
   username: "",
   email: "",
   password: "",
@@ -27,27 +28,37 @@ const defaultValues: RegisterForm = {
 };
 
 export default function Register() {
-  const [values, setValues] = useState<RegisterForm>(defaultValues);
-  const [errors, setErrors] = useState<RegisterErrors>({});
-  const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
 
+  const [values, setValues] = useState<RegisterForm>(initialValues);
+  const [errors, setErrors] = useState<RegisterErrors>({});
+  const [submitted, setSubmitted] = useState(false);
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setValues((prev) => ({ ...prev, [event.target.name]: event.target.value }));
-    setErrors((prev) => ({ ...prev, [event.target.name]: undefined }));
+    const { name, value } = event.target;
+
+    setValues((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: undefined,
+    }));
   };
 
   const validate = () => {
     const nextErrors: RegisterErrors = {};
 
     if (!values.username.trim()) {
-      nextErrors.username = "Username is required.";
+      nextErrors.username = "Full name is required.";
     }
 
     if (!values.email.trim()) {
       nextErrors.email = "Email address is required.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-      nextErrors.email = "Enter a valid email address.";
+      nextErrors.email = "Please enter a valid email address.";
     }
 
     if (!values.password) {
@@ -67,56 +78,69 @@ export default function Register() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     setSubmitted(true);
+
     const validationErrors = validate();
+
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length === 0) {
       localStorage.setItem("accessToken", "taskflow-demo-token");
+
       navigate("/dashboard");
     }
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black text-slate-100">
+    <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
+      {/* Background Effects */}
+      <div className="absolute inset-0">
+        <div className="absolute left-[-10%] top-[-10%] h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="absolute bottom-[-10%] right-[-10%] h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+      </div>
+
       <AuthHeader currentPage="register" />
 
-      <div className="absolute inset-x-0 top-0 h-72 bg-black" />
-      <main className="relative mx-auto flex min-h-screen max-w-7xl items-center justify-center px-6 py-20 sm:px-8 sm:py-24">
-        <div className="w-full max-w-[420px] mx-auto">
+      <main className="relative z-10 flex min-h-screen items-center justify-center px-6 py-16">
+        <div className="w-full max-w-md">
           <AuthCard
-            title="Create your account"
-            subtitle="Join TaskFlow and start organizing your tasks"
-            icon={<span className="text-2xl font-semibold">+</span>}
+            title="Create an account"
+            subtitle="Start managing your tasks with TaskFlow"
+            icon={
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/15 ring-1 ring-sky-400/20">
+                <span className="text-xl font-bold text-sky-300">+</span>
+              </div>
+            }
             footer={
-              <p className="text-sm text-slate-400">
+              <p className="text-center text-sm text-slate-400">
                 Already have an account?{" "}
                 <Link
                   to="/login"
-                  className="font-semibold text-sky-300 transition hover:text-sky-200"
+                  className="font-medium text-sky-400 transition hover:text-sky-300"
                 >
                   Sign in
                 </Link>
               </p>
             }
           >
-            <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+            <form onSubmit={handleSubmit} noValidate className="space-y-5">
               <TextInput
-                label="Full name"
+                label="Full Name"
                 name="username"
                 value={values.username}
-                placeholder="Enter your full name"
+                placeholder="John Doe"
                 autoComplete="name"
                 error={submitted ? errors.username : undefined}
                 onChange={handleChange}
               />
 
               <TextInput
-                label="Email address"
+                label="Email Address"
                 name="email"
                 type="email"
                 value={values.email}
-                placeholder="Enter your email"
+                placeholder="you@example.com"
                 autoComplete="email"
                 error={submitted ? errors.email : undefined}
                 onChange={handleChange}
@@ -126,14 +150,14 @@ export default function Register() {
                 label="Password"
                 name="password"
                 value={values.password}
-                placeholder="Create a password"
+                placeholder="Enter your password"
                 autoComplete="new-password"
                 error={submitted ? errors.password : undefined}
                 onChange={handleChange}
               />
 
               <PasswordInput
-                label="Confirm password"
+                label="Confirm Password"
                 name="confirmPassword"
                 value={values.confirmPassword}
                 placeholder="Confirm your password"
@@ -144,9 +168,11 @@ export default function Register() {
 
               <button
                 type="submit"
-                className="inline-flex w-full items-center justify-center rounded-full bg-sky-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-400"
+                className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-2xl bg-sky-500 px-5 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-sky-400 hover:shadow-[0_0_30px_rgba(14,165,233,0.35)] focus:outline-none focus:ring-2 focus:ring-sky-400/40"
               >
-                Create Account
+                <span className="relative z-10">Create Account</span>
+
+                <div className="absolute inset-0 bg-gradient-to-r from-sky-400 via-cyan-400 to-sky-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               </button>
             </form>
           </AuthCard>

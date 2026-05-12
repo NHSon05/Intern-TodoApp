@@ -7,6 +7,8 @@ import PrivateRoute from "../components/auth/PrivateRoute";
 const Login = lazy(() => import("../pages/Auth/login/Login"));
 const Register = lazy(() => import("../pages/Auth/register/Register"));
 const Dashboard = lazy(() => import("../pages/dashboard/Dashboard"));
+const AllTasks = lazy(() => import("../pages/alltask/Alltask"));
+const Calendar = lazy(() => import("../pages/calendar/Calendar"));
 const Profile = lazy(() => import("../pages/profile/Profile"));
 const NotFound = lazy(() => import("../pages/not-found/NotFound"));
 
@@ -30,6 +32,8 @@ const AppRoutes: React.FC = () => {
           {/* Private Routes */}
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/all-tasks" element={<AllTasks />} />
+            <Route path="/calendar" element={<Calendar />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
 
