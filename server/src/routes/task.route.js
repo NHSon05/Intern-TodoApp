@@ -2,8 +2,14 @@ const express = require('express');
 const router = express.Router();
 
 const { verifyToken } = require('../middlewares/auth.middleware');
+const { createTasks, getTasks, getTasksById, updateTasksById, toggleTaskStatus, deleteTasksById } = require('../controllers/task.controller');
 
-router.get('/', verifyToken, (req, res) => res.send("You have presented the correct Token, allowing you to retrieve the Task list!"));
-router.post('/', verifyToken, (req, res) => res.send("You have presented the correct Token, allowing you to create Task!"));
+router.post('/', verifyToken, createTasks)
+router.get('/', verifyToken, getTasks)
+router.get('/:id', verifyToken,  getTasksById)
+router.put('/:id', verifyToken, updateTasksById)
+router.patch('/:id/status', verifyToken, toggleTaskStatus)
+router.delete('/:id', verifyToken, deleteTasksById)
+
 
 module.exports = router;
