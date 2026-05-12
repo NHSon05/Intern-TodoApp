@@ -29,14 +29,57 @@ const createTasks = async ( req, res) => {
 
 const getTasks = async (req, res) => {
     try {
-        const tasks = await prisma.task.findMany({
-            where: {
-                userId: req.user.id
+        const userId = req.user.userId
+    
+        const {title, status, category, page } = req.query
+    
+        // pagination
+        const limit = 10;
+        const currentPage = parseInt(page) || 1;
+        const skip = (currentPage - 1) * limit;
+    
+        // dynamic where
+        const whereCondition = {
+            userId: req.user.userId
+        }
+    
+        if ( title ) {
+            whereCondition.title = {
+                contains: title
             }
-        })
+        }
+        if (status) {
+            whereCondition.status = status;
+        }
+        if (category) {
+            whereCondition.category = category
+        }
+        
+        const [tasks, totalTasks] = await Promise.all([
+            prisma.task.findMany({
+                where: whereCondition,
+                skip: skip,
+                take: limit,
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            }),
+            prisma.task.count({
+                where: whereCondition
+            })
+        ])
+
+        const totalPages = Math.ceil(totalTasks / limit);
+        
         return res.status(200).json({
             success: true,
             data: tasks,
+            meta: {
+                total: totalTasks,
+                page: currentPage,
+                limit: limit,
+                totalPages
+            },
             message: "Get task successfully"
         })
     } catch (error) {
@@ -166,6 +209,8 @@ const toggleTaskStatus = async (req, res) => {
         return res.status(500).json({message: "Error" + error.message})
     }
 }
+
+
 
 module.exports = {
     createTasks,
