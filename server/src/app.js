@@ -1,6 +1,6 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
 
 const { connectDB } = require('./config/prisma');
 
@@ -9,11 +9,6 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
-
-// API Test
-app.get('/', (req, res) => {
-    res.json({ message: 'Backend TaskFlow đang chạy mượt mà!' });
-});
 
 // Routes
 const authRoutes = require('./routes/auth.routes');

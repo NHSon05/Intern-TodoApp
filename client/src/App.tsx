@@ -1,10 +1,12 @@
-import './App.css'
-import AppRoutes from './routes'
+import AppRoutes from "./routes";
+import { TaskProvider } from "./context/TaskContext";
 
 export default function App() {
   return (
-    <div className="w-full h-full">
-      <AppRoutes />
-    </div>
+    <TaskProvider>
+      <div className="min-h-screen bg-slate-950 text-slate-100">
+        <AppRoutes />
+      </div>
+    </TaskProvider>
   );
 }
