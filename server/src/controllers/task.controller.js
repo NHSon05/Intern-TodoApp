@@ -11,7 +11,7 @@ const createTasks = async (req, res) => {
         }
 
         const project = await prisma.project.findFirst({
-            where: { id: parseInt(projectId), userId: req.user.userId },
+            where: { id: parseInt(projectId), userId: parseInt(req.user.userId) },
         });
         if (!project) {
             return res.status(404).json({ success: false, message: "Project not found" });
@@ -23,8 +23,8 @@ const createTasks = async (req, res) => {
                 description,
                 scheduleDate: scheduleDate ? new Date(scheduleDate) : null,
                 dueDate: dueDate ? new Date(dueDate) : null,
-                status: status || "NEW",
-                userId: req.user.userId,
+                status: status || "New",
+                userId: parseInt(req.user.userId),
                 projectId: parseInt(projectId),
             },
         });
@@ -109,10 +109,10 @@ const updateTask = async (req, res) => {
             where: { id: parseInt(taskId) },
             data: {
                 ...(title        && { title }),
-                ...(description  && { description }),
+                ...(description !== undefined && { description }),
                 ...(status       && { status }),
-                ...(scheduleDate && { scheduleDate: new Date(scheduleDate) }),
-                ...(dueDate      && { dueDate: new Date(dueDate) }),
+                ...(scheduleDate !== undefined && { scheduleDate: scheduleDate ? new Date(scheduleDate) : null }),
+                ...(dueDate      !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
             },
         });
         return res.status(200).json({
