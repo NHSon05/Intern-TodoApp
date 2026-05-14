@@ -1,5 +1,5 @@
-import TaskCard from "./TaskCard";
-import type { Task } from "../../types/task";
+import TaskCard from "../../pages/dashboard/components/TaskCard";
+import type { Task } from "../../types/task.type";
 
 interface TaskSectionProps {
   title: string;

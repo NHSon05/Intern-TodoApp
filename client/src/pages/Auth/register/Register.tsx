@@ -5,8 +5,8 @@ import { validateRegister } from "@/utils/auth-validation";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { RegisterRequest } from "@/types/auth.type";
-import AuthHeader from "@/components/ui/AuthHeader";
-import AuthCard from "@/components/ui/AuthCard";
+import AuthHeader from "@/pages/Auth/components/AuthHeader";
+import AuthCard from "@/pages/Auth/components/AuthCard";
 import TextInput from "@/components/ui/TextInput";
 import PasswordInput from "@/components/ui/PasswordInput";
 

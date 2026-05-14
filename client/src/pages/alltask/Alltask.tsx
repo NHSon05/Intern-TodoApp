@@ -1,9 +1,9 @@
 import NewTaskModal from "@/components/ui/NewTaskModal";
 import Sidebar from "@/components/ui/Sidebar";
-import TaskCard from "@/components/ui/TaskCard";
+import TaskCard from "@/pages/dashboard/components/TaskCard";
 import TopActionBar from "@/components/ui/TopActionBar";
 import { useTaskContext } from "@/context/TaskContext";
-import type { NewTaskPayload, Task } from "@/types/task";
+import type { NewTaskPayload, Task } from "@/types/task.type";
 import { useMemo, useState } from "react";
 
 export default function AllTasks() {

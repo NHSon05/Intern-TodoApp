@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import Sidebar from "../../components/ui/Sidebar";
 import NewTaskModal from "../../components/ui/NewTaskModal";
 import { useTaskContext } from "../../context/TaskContext";
-import type { NewTaskPayload, Task } from "../../types/task";
+import type { NewTaskPayload, Task } from "../../types/task.type";
 import { STATUS_COLORS } from "../../constants/taskStatus";
 
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

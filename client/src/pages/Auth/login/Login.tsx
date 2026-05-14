@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import AuthCard from "@/components/ui/AuthCard";
-import AuthHeader from "@/components/ui/AuthHeader";
+import AuthCard from "@/pages/Auth/components/AuthCard";
+import AuthHeader from "@/pages/Auth/components/AuthHeader";
 import PasswordInput from "@/components/ui/PasswordInput";
 import TextInput from "@/components/ui/TextInput";
 import type { LoginErrors, LoginRequest } from "@/types/auth.type";
@@ -40,7 +40,6 @@ export default function Login() {
 
     try {
       await login.mutateAsync(values);
-      toast.success("Đăng nhập thành công!");
 
       setIsLoading(true)
       await login.mutateAsync(values)
