@@ -1,10 +1,10 @@
+import NewTaskModal from "@/components/ui/NewTaskModal";
+import Sidebar from "@/components/ui/Sidebar";
+import TaskCard from "@/components/ui/TaskCard";
+import TopActionBar from "@/components/ui/TopActionBar";
+import { useTaskContext } from "@/context/TaskContext";
+import type { NewTaskPayload, Task } from "@/types/task";
 import { useMemo, useState } from "react";
-import Sidebar from "../../components/ui/Sidebar";
-import TopActionBar from "../../components/ui/TopActionBar";
-import NewTaskModal from "../../components/ui/NewTaskModal";
-import TaskCard from "../../components/ui/TaskCard";
-import type { NewTaskPayload, Task } from "../../types/task";
-import { useTaskContext } from "../../context/TaskContext";
 
 export default function AllTasks() {
   const { tasks, createTask, updateTask, deleteTask } = useTaskContext();

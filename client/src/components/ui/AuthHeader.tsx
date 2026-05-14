@@ -6,7 +6,7 @@ interface AuthHeaderProps {
 
 const AuthHeader = ({ currentPage }: AuthHeaderProps) => {
   return (
-    <header className="absolute inset-x-0 top-0 z-20 border-b border-white/10 bg-black/95 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-black/95 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 sm:px-8">
         <Link
           to="/login"
@@ -29,7 +29,7 @@ const AuthHeader = ({ currentPage }: AuthHeaderProps) => {
                 : "text-slate-300 hover:text-white"
             }`}
           >
-            Sign In
+            Login
           </Link>
           <Link
             to="/register"
@@ -39,7 +39,7 @@ const AuthHeader = ({ currentPage }: AuthHeaderProps) => {
                 : "bg-sky-500 text-white shadow-sky-500/20 hover:bg-sky-400"
             }`}
           >
-            Get Started
+            Register
           </Link>
         </div>
       </div>
