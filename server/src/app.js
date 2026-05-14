@@ -3,8 +3,12 @@ const cors = require("cors");
 require("dotenv").config();
 
 const { connectDB } = require('./config/prisma');
+const { startCronJobs } = require('./services/cron.service');
 
 const app = express();
+
+// Cron jobs
+startCronJobs();
 
 // Middlewares
 app.use(cors());

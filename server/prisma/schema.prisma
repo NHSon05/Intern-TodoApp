@@ -10,7 +10,7 @@ datasource db {
 enum TaskStatus {
   NEW
   ACTIVE
-  PENDING
+  PROGRESS
   REMIND
   REMINDED
   DONE
