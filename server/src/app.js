@@ -14,9 +14,11 @@ app.use(express.json());
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.route');
 const taskRoutes = require('./routes/task.route');
+const projectRoutes = require('./routes/project.routes');
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
-app.use("/tasks", taskRoutes)
+app.use("/tasks", taskRoutes);
+app.use("/projects", projectRoutes);
 
 // Khởi động Server
 const PORT = process.env.PORT || 5000;
