@@ -45,12 +45,14 @@ const startCronJobs = () => {
               <p>Công việc <strong>"${task.title}"</strong> của bạn đã tới giờ thực hiện!</p>
               <p><strong>Mô tả:</strong> ${task.description || 'Không có mô tả'}</p>
               <p>Vui lòng đăng nhập vào hệ thống để cập nhật tiến độ nhé.</p>
+              <button>
+                <a href="${process.env.CLIENT_URL}/dashboard">Xem chi tiết</a>
+              </button>
               <br/>
               <p>Trân trọng,<br/>TaskFlow System</p>
             `
           };
           await transporter.sendMail(mailOptions);
-          console.log(`Send email remind to ${task.user.email}`)
         }
       }
     } catch (error) {
