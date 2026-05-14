@@ -1,209 +1,113 @@
-import { useMemo, useState } from "react";
-import Sidebar from "../../components/ui/Sidebar";
-import NewTaskModal from "../../components/ui/NewTaskModal";
-import TaskCard from "../../components/ui/TaskCard";
-import type { NewTaskPayload, Task } from "../../types/task";
-import { useTaskContext } from "../../context/TaskContext";
-import { TASK_STATUSES } from "../../constants/taskStatus";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { ProjectResponse } from "@/types/project.type";
+
+import { useCreateProject, useDeleteProject, useGetProjects, useUpdateProject } from "@/hooks/useProject";
+
+import Sidebar from "@/components/ui/Sidebar";
+import Header from "./components/Header";
+import ProjectCard from "./components/ProjectCard";
+import ProjectPopUp from "./components/ProjectPopUp";
 
 export default function Dashboard() {
-  const { tasks, createTask, updateTask, deleteTask } = useTaskContext();
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
-  const [expandedSections, setExpandedSections] = useState<
-    Record<Task["category"], boolean>
-  >({
-    Homework: true,
-    Work: true,
-  });
 
-  const tasksByCategoryAndStatus = useMemo(() => {
-    const result: Record<Task["category"], Record<Task["status"], Task[]>> = {
-      Homework: {
-        New: [],
-        Active: [],
-        "In Progress": [],
-        Done: [],
-        Closed: [],
-      },
-      Work: {
-        New: [],
-        Active: [],
-        "In Progress": [],
-        Done: [],
-        Closed: [],
-      },
-    };
+  const {data: projects, isLoading } = useGetProjects()
+  const createProjectMutation = useCreateProject()
+  const updateProjectMutation = useUpdateProject()
+  const deleteProjectMutation = useDeleteProject()
 
-    tasks.forEach((task) => {
-      result[task.category][task.status].push(task);
-    });
+  const [projectPopUpOpen, setProjectPopUpOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<ProjectResponse | null>(null);
 
-    return result;
-  }, [tasks]);
-
-  const toggleSection = (category: Task["category"]) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }));
+  const handleCreateProject = async (name: string) => {
+    try {
+      await createProjectMutation.mutateAsync({name})
+      toast.success("Project created!");
+      setProjectPopUpOpen(false);
+    } catch (error) {
+      toast.error("Failed to create project");
+      console.error(error)
+    }
   };
 
-  const handleOpenModal = () => setIsCreateModalOpen(true);
-  const handleCloseModal = () => {
-    setIsCreateModalOpen(false);
-    setTaskToEdit(null);
+  const handleOpenEdit = (project: ProjectResponse) => {
+    setEditingProject(project);
+    setProjectPopUpOpen(true);
   };
 
-  const handleEditTask = (taskId: string) => {
-    const task = tasks.find((item) => item.id === taskId);
-    if (!task) return;
-    setTaskToEdit(task);
-    setIsCreateModalOpen(true);
+  const handleUpdateProject = async (name: string) => {
+    try {
+      if (!editingProject) return;
+      await updateProjectMutation.mutateAsync({id: editingProject.id, data: {name}})
+      toast.success("Project updated!");
+      setProjectPopUpOpen(false);
+      setEditingProject(null);
+    } catch (error) {
+      toast.error("Failed to update project");
+      console.error(error)
+    }
   };
 
-  const handleCreateTask = (payload: NewTaskPayload) => {
-    createTask(payload);
-    handleCloseModal();
+  const handleDeleteProject = async (id: number) => {
+    try {
+      await deleteProjectMutation.mutateAsync(id)
+      toast.success("Project deleted!");
+    } catch (error) {
+      toast.error("Failed to delete project");
+      console.error(error)
+    }
   };
 
-  const handleUpdateTask = (taskId: string, payload: NewTaskPayload) => {
-    updateTask(taskId, payload);
-    handleCloseModal();
-  };
-
-  const handleDeleteTask = (taskId: string) => {
-    deleteTask(taskId);
-  };
+  if (isLoading) return <div>Đang tải danh sách...</div>;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <Sidebar />
+
       <main className="min-h-screen md:ml-72">
-        <div className="border-b border-white/10 px-4 py-4 shadow-sm shadow-slate-950/10 md:px-8">
-          <div className="mx-auto flex max-w-10xl flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-sky-300/80">
-                Dashboard
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold text-white">
-                Track your Homework and Work tasks.
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
-                View all tasks organized by category with their current status.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleOpenModal}
-              className="inline-flex items-center justify-center rounded-full bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
-            >
-              + New Task
-            </button>
-          </div>
-        </div>
+        {/* Header */}
+        <Header setProjectPopUpOpen={setProjectPopUpOpen} setEditingProject={setEditingProject}/>
 
+        {/* Project list */}
         <div className="mx-auto max-w-10xl px-4 py-8 md:px-8">
-          <div className="space-y-8">
-            {(["Homework", "Work"] as Task["category"][]).map((category) => {
-              const categoryTasks = Object.values(
-                tasksByCategoryAndStatus[category],
-              ).flat();
-              const isExpanded = expandedSections[category];
-
-              return (
-                <div
-                  key={category}
-                  className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/20"
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleSection(category)}
-                    className="flex w-full items-center justify-between text-left"
-                  >
-                    <div>
-                      <h2 className="text-2xl font-semibold text-white">
-                        {category}
-                      </h2>
-                      <p className="mt-1 text-sm text-slate-400">
-                        {categoryTasks.length} task
-                        {categoryTasks.length === 1 ? "" : "s"}
-                      </p>
-                    </div>
-                    <svg
-                      className={`h-5 w-5 text-slate-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
-
-                  {isExpanded && (
-                    <div className="mt-6">
-                      {categoryTasks.length === 0 ? (
-                        <div className="rounded-[26px] border border-dashed border-white/10 bg-slate-950/80 p-10 text-center text-sm text-slate-400">
-                          No {category.toLowerCase()} tasks yet.
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                          {TASK_STATUSES.map((status) => {
-                            const statusTasks =
-                              tasksByCategoryAndStatus[category][status];
-                            return (
-                              <div key={status} className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-2 w-2 rounded-full bg-slate-400" />
-                                  <h3 className="text-sm font-semibold text-slate-300">
-                                    {status}
-                                  </h3>
-                                  <span className="text-xs text-slate-500">
-                                    ({statusTasks.length})
-                                  </span>
-                                </div>
-                                <div className="space-y-3">
-                                  {statusTasks.length === 0 ? (
-                                    <div className="rounded-lg border border-dashed border-white/5 bg-slate-950/50 p-4 text-center text-xs text-slate-500">
-                                      No tasks
-                                    </div>
-                                  ) : (
-                                    statusTasks.map((task) => (
-                                      <TaskCard
-                                        key={task.id}
-                                        task={task}
-                                        onEdit={handleEditTask}
-                                        onDelete={handleDeleteTask}
-                                      />
-                                    ))
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          {isLoading ? (
+            <div className="py-20 text-center text-slate-500">Loading projects…</div>
+          ) : projects.length === 0 ? (
+            <div className="rounded-[32px] border border-dashed border-white/10 bg-slate-900/40 p-20 text-center">
+              <p className="text-slate-400">No projects yet.</p>
+              <button
+                type="button"
+                onClick={() => { setEditingProject(null); setProjectPopUpOpen(true); }}
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
+              >
+                + Create your first project
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {projects?.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  projectId={project.id}
+                  projectName={project.name}
+                  onEditProject={() => handleOpenEdit(project)}
+                  onDeleteProject={() => handleDeleteProject(project.id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
-
-        <NewTaskModal
-          open={isCreateModalOpen}
-          onClose={handleCloseModal}
-          onCreateTask={handleCreateTask}
-          onUpdateTask={handleUpdateTask}
-          taskToEdit={taskToEdit}
-        />
       </main>
+
+      {/* Project PopUp (create & edit) */}
+      <ProjectPopUp
+        key={editingProject ? editingProject.id : ''}
+        open={projectPopUpOpen}
+        isPending={createProjectMutation.isPending || updateProjectMutation.isPending}
+        onClose={() => { setProjectPopUpOpen(false); setEditingProject(null); }}
+        onSubmit={editingProject ? handleUpdateProject : handleCreateProject}
+        initialName={editingProject?.name}
+      />
     </div>
   );
 }

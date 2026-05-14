@@ -5,7 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { NewTaskPayload, Task } from "../types/task";
+import type { NewTaskPayload, Task } from "../types/task.type";
 
 interface TaskContextValue {
   tasks: Task[];
