@@ -1,29 +1,27 @@
 import { useState, type ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import AuthCard from "../../../components/ui/AuthCard";
-import AuthHeader from "../../../components/ui/AuthHeader";
-import PasswordInput from "../../../components/ui/PasswordInput";
-import TextInput from "../../../components/ui/TextInput";
+import AuthCard from "@/components/ui/AuthCard";
+import AuthHeader from "@/components/ui/AuthHeader";
+import PasswordInput from "@/components/ui/PasswordInput";
+import TextInput from "@/components/ui/TextInput";
+import type { LoginErrors, LoginRequest } from "@/types/auth.type";
+import { validateLogin } from "@/utils/auth-validation";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
-interface LoginForm {
-  email: string;
-  password: string;
-}
 
-interface LoginErrors {
-  email?: string;
-  password?: string;
-}
-
-const defaultValues: LoginForm = {
+const defaultValues: LoginRequest = {
   email: "",
   password: "",
 };
 
 export default function Login() {
-  const [values, setValues] = useState<LoginForm>(defaultValues);
+
+  const [isLoading, setIsLoading] = useState(false)
+  const [values, setValues] = useState<LoginRequest>(defaultValues);
   const [errors, setErrors] = useState<LoginErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const { login } = useAuth()
   const navigate = useNavigate();
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -31,33 +29,31 @@ export default function Login() {
     setErrors((prev) => ({ ...prev, [event.target.name]: undefined }));
   };
 
-  const validate = () => {
-    const nextErrors: LoginErrors = {};
-
-    if (!values.email.trim()) {
-      nextErrors.email = "Email address is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-      nextErrors.email = "Enter a valid email address.";
-    }
-
-    if (!values.password) {
-      nextErrors.password = "Password is required.";
-    } else if (values.password.length < 6) {
-      nextErrors.password = "Password must be at least 6 characters.";
-    }
-
-    return nextErrors;
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitted(true);
-    const validationErrors = validate();
+
+    const validationErrors = validateLogin(values)
     setErrors(validationErrors);
 
-    if (Object.keys(validationErrors).length === 0) {
-      localStorage.setItem("accessToken", "taskflow-demo-token");
-      navigate("/dashboard");
+    if (Object.keys(validationErrors).length > 0) return;
+
+    try {
+      await login.mutateAsync(values);
+      toast.success("Đăng nhập thành công!");
+
+      setIsLoading(true)
+      await login.mutateAsync(values)
+      toast.success("Login successfully")
+      navigate('/dashboard')
+    } catch (error) {
+      toast.error("Login failed, email or password is incorrect")
+      setErrors((prev) => ({
+        ...prev,
+        serverError: error.message || "Login failed, email or password is incorrect" 
+      }));
+    } finally {
+      setIsLoading(false)
     }
   };
 
@@ -66,12 +62,11 @@ export default function Login() {
       <AuthHeader currentPage="login" />
 
       <div className="absolute inset-x-0 top-0 h-72 bg-black" />
-      <main className="relative mx-auto flex min-h-screen max-w-7xl items-center justify-center px-6 py-20 sm:px-8 sm:py-24">
-        <div className="w-full max-w-[420px] mx-auto">
+      <main className="relative mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-20 sm:px-8 sm:py-24">
+        <div className="w-full max-w-[420px] mx-auto ">
           <AuthCard
             title="Welcome back"
             subtitle="Sign in to your TaskFlow account"
-            icon={<span className="text-2xl font-semibold">✓</span>}
             footer={
               <p className="text-sm text-slate-400">
                 Don&apos;t have an account?{" "}
@@ -108,9 +103,14 @@ export default function Login() {
 
               <button
                 type="submit"
+                disabled={isLoading}
                 className="inline-flex w-full items-center justify-center rounded-full bg-sky-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-400"
               >
-                Sign In
+                {isLoading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  "Login"
+                )}
               </button>
             </form>
           </AuthCard>

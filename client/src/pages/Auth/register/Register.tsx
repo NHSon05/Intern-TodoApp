@@ -1,38 +1,38 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import AuthCard from "../../../components/ui/AuthCard";
-import AuthHeader from "../../../components/ui/AuthHeader";
-import PasswordInput from "../../../components/ui/PasswordInput";
-import TextInput from "../../../components/ui/TextInput";
+import { validateRegister } from "@/utils/auth-validation";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import type { RegisterRequest } from "@/types/auth.type";
+import AuthHeader from "@/components/ui/AuthHeader";
+import AuthCard from "@/components/ui/AuthCard";
+import TextInput from "@/components/ui/TextInput";
+import PasswordInput from "@/components/ui/PasswordInput";
 
-interface RegisterForm {
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
 
 interface RegisterErrors {
-  username?: string;
+  name?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
 }
 
-const initialValues: RegisterForm = {
-  username: "",
+const initialValues: RegisterRequest = {
+  name: "",
   email: "",
   password: "",
   confirmPassword: "",
 };
 
 export default function Register() {
-  const navigate = useNavigate();
-
-  const [values, setValues] = useState<RegisterForm>(initialValues);
+const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false)
+  const [values, setValues] = useState<RegisterRequest>(initialValues);
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  
+  const { register } = useAuth(); 
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -42,56 +42,45 @@ export default function Register() {
       [name]: value,
     }));
 
-    setErrors((prev) => ({
-      ...prev,
-      [name]: undefined,
-    }));
+    if (errors[name as keyof RegisterErrors]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
   };
 
-  const validate = () => {
-    const nextErrors: RegisterErrors = {};
-
-    if (!values.username.trim()) {
-      nextErrors.username = "Full name is required.";
-    }
-
-    if (!values.email.trim()) {
-      nextErrors.email = "Email address is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-      nextErrors.email = "Please enter a valid email address.";
-    }
-
-    if (!values.password) {
-      nextErrors.password = "Password is required.";
-    } else if (values.password.length < 8) {
-      nextErrors.password = "Password must be at least 8 characters.";
-    }
-
-    if (!values.confirmPassword) {
-      nextErrors.confirmPassword = "Please confirm your password.";
-    } else if (values.confirmPassword !== values.password) {
-      nextErrors.confirmPassword = "Passwords do not match.";
-    }
-
-    return nextErrors;
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     setSubmitted(true);
+    setIsLoading(true)
 
-    const validationErrors = validate();
-
+    const validationErrors = validateRegister(values);
     setErrors(validationErrors);
+    const isFormValid = Object.keys(validationErrors).length === 0;
 
-    if (Object.keys(validationErrors).length === 0) {
-      localStorage.setItem("accessToken", "taskflow-demo-token");
+    if (!isFormValid) return;
 
-      navigate("/dashboard");
+    try {
+      await register.mutateAsync(values, {
+        onSuccess: () => {
+          toast.success("Register successfully")
+          setValues(initialValues)
+          navigate('/login')
+        },
+        onError: () => {
+          toast.error("Register failed")
+        }
+      })
+    } catch (error) {
+      setErrors((prev) => ({
+        ...prev,
+        serverError: error?.data?.message || "Đăng ký thất bại. Vui lòng kiểm tra lại thông tin!"
+      }));
+    } finally {
+      setIsLoading(false)
     }
   };
-
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
       {/* Background Effects */}
@@ -107,11 +96,6 @@ export default function Register() {
           <AuthCard
             title="Create an account"
             subtitle="Start managing your tasks with TaskFlow"
-            icon={
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/15 ring-1 ring-sky-400/20">
-                <span className="text-xl font-bold text-sky-300">+</span>
-              </div>
-            }
             footer={
               <p className="text-center text-sm text-slate-400">
                 Already have an account?{" "}
@@ -127,11 +111,11 @@ export default function Register() {
             <form onSubmit={handleSubmit} noValidate className="space-y-5">
               <TextInput
                 label="Full Name"
-                name="username"
-                value={values.username}
+                name="name"
+                value={values.name}
                 placeholder="John Doe"
                 autoComplete="name"
-                error={submitted ? errors.username : undefined}
+                error={submitted ? errors.name : undefined}
                 onChange={handleChange}
               />
 
@@ -170,9 +154,13 @@ export default function Register() {
                 type="submit"
                 className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-2xl bg-sky-500 px-5 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-sky-400 hover:shadow-[0_0_30px_rgba(14,165,233,0.35)] focus:outline-none focus:ring-2 focus:ring-sky-400/40"
               >
-                <span className="relative z-10">Create Account</span>
+                {isLoading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  "Create Account"
+                )}
 
-                <div className="absolute inset-0 bg-gradient-to-r from-sky-400 via-cyan-400 to-sky-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="absolute inset-0 bg-linear-to-r from-sky-400 via-cyan-400 to-sky-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               </button>
             </form>
           </AuthCard>
