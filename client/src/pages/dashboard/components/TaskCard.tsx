@@ -20,8 +20,22 @@ function formatDueDate(date: string) {
 }
 
 export default function TaskCard({ task, onDelete, onEdit }: TaskCardProps) {
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    e.dataTransfer.setData("taskId", String(task.id));
+  };
+
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    e.currentTarget.style.opacity = '1';
+  };
+
   return (
-    <article className="rounded-[26px] border border-white/10 bg-slate-950/95 p-5 shadow-slate-950/40 transition hover:-translate-y-0.5 hover:bg-slate-900/95">
+    <article
+      draggable={true}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      className="rounded-[26px] border border-white/10 bg-slate-950/95 p-5 shadow-slate-950/40 transition hover:-translate-y-0.5 hover:bg-slate-900/95 cursor-grab active:cursor-grabbing"
+    >
       <div className="flex gap-4">
         <div className="mt-1 flex h-4 w-4 items-center justify-center">
           <span

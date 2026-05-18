@@ -1,28 +1,30 @@
-import NewTaskModal from "@/components/ui/NewTaskModal";
 import Sidebar from "@/components/ui/Sidebar";
 import TaskCard from "@/pages/dashboard/components/TaskCard";
 import TopActionBar from "@/components/ui/TopActionBar";
-import { useTaskContext } from "@/context/TaskContext";
-import type { NewTaskPayload, Task } from "@/types/task.type";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import type { TaskRequest, TaskResponse } from "@/types/task.type";
+import TaskPopUp from "../dashboard/components/TaskPopUp";
+import { useCreateTask, useDeleteTask, useGetAllTasks, useUpdateTask } from "@/hooks/useTask";
+import { useGetProjects } from "@/hooks/useProject";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function AllTasks() {
-  const { tasks, createTask, updateTask, deleteTask } = useTaskContext();
+  
+  const { data: projects, isPending: getProjectPending } = useGetProjects()
+
+  const defaultProjectId = projects?.[0]?.id || 0;
+
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
   const [status, setStatus] = useState("All Status");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
-
-  const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      const matchesSearch =
-        task.title.toLowerCase().includes(search.toLowerCase()) ||
-        task.description.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus =
-        status === "All Status" ? true : task.status === status;
-      return matchesSearch && matchesStatus;
-    });
-  }, [tasks, search, status]);
+  const [taskToEdit, setTaskToEdit] = useState<TaskResponse | null>(null);
+  
+  const { data: tasks = [] } = useGetAllTasks(debouncedSearch, status);
+  
+  const { mutate: deleteTask } = useDeleteTask(defaultProjectId);
+  const { mutate: updateTask, isPending: isPendingUpdate } = useUpdateTask(defaultProjectId);
+  const { mutate: createTask, isPending: isPendingCreate } = useCreateTask(defaultProjectId);
 
   const handleOpenModal = () => setIsCreateModalOpen(true);
 
@@ -31,22 +33,32 @@ export default function AllTasks() {
     setTaskToEdit(null);
   };
 
-  const handleEditTask = (taskId: string) => {
-    const task = tasks.find((item) => item.id === taskId);
+  const handleEditTask = (taskId: number) => {
+    const task = tasks.find((item) => Number(item.id) === taskId);
     if (!task) return;
     setTaskToEdit(task);
     setIsCreateModalOpen(true);
   };
 
-  const handleCreateTask = (payload: NewTaskPayload) => {
-    createTask(payload);
+  const handleSubmitTask = (payload: TaskRequest) => {
+    if (taskToEdit) {
+      updateTask({ id: Number(taskToEdit.id), data: payload, projectId: taskToEdit.projectId });
+    } else {
+      createTask(payload);
+    }
     handleCloseModal();
   };
 
-  const handleUpdateTask = (taskId: string, payload: NewTaskPayload) => {
-    updateTask(taskId, payload);
-    handleCloseModal();
+  const handleDeleteTask = (taskId: number) => {
+    if (confirm("Are you sure to delete this task?")) {
+      const task = tasks.find(t => Number(t.id) === taskId);
+      deleteTask({ id: taskId, projectId: task?.projectId || defaultProjectId });
+    }
   };
+
+  if (getProjectPending) {
+    return <div>Loading...</div>
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
@@ -65,13 +77,6 @@ export default function AllTasks() {
                 Filter, search, and edit tasks from the centralized task board.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleOpenModal}
-              className="inline-flex items-center justify-center rounded-full bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
-            >
-              + New Task
-            </button>
           </div>
         </div>
 
@@ -79,7 +84,7 @@ export default function AllTasks() {
           <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/20">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <span className="inline-flex rounded-full bg-slate-800/70 px-3 py-1 text-xs uppercase tracking-[0.28em] text-slate-300">
-                {filteredTasks.length} tasks
+                {tasks.length} tasks
               </span>
             </div>
 
@@ -94,17 +99,17 @@ export default function AllTasks() {
             </div>
 
             <div className="space-y-4">
-              {filteredTasks.length === 0 ? (
+              {tasks.length === 0 ? (
                 <div className="rounded-[26px] border border-dashed border-white/10 bg-slate-950/80 p-10 text-center text-sm text-slate-400">
                   No tasks match your filters. Create a new task to see it here.
                 </div>
               ) : (
-                filteredTasks.map((task) => (
+                tasks.map((task) => (
                   <TaskCard
                     key={task.id}
                     task={task}
                     onEdit={handleEditTask}
-                    onDelete={deleteTask}
+                    onDelete={handleDeleteTask}
                   />
                 ))
               )}
@@ -112,11 +117,11 @@ export default function AllTasks() {
           </div>
         </div>
 
-        <NewTaskModal
+        <TaskPopUp
           open={isCreateModalOpen}
+          isPending={isPendingCreate || isPendingUpdate}
           onClose={handleCloseModal}
-          onCreateTask={handleCreateTask}
-          onUpdateTask={handleUpdateTask}
+          onSubmit={handleSubmitTask}
           taskToEdit={taskToEdit}
         />
       </main>

@@ -9,7 +9,8 @@ export interface TaskRequest {
 }
 
 export interface TaskResponse {
-  id: string;
+  id: number;
+  projectId?: number;
   title: string;
   description: string;
   status: TaskStatus;

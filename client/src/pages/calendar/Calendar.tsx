@@ -1,52 +1,20 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, Fragment } from "react";
 import Sidebar from "../../components/ui/Sidebar";
-import NewTaskModal from "../../components/ui/NewTaskModal";
-import { useTaskContext } from "../../context/TaskContext";
-import type { NewTaskPayload, Task } from "../../types/task.type";
 import { STATUS_COLORS } from "../../constants/taskStatus";
+import { buildCalendarGrid } from "@/utils/buildCalendarGrid";
+import { formatMonthTitle } from "@/utils/format-month-title";
+import { useGetAllTasks } from "@/hooks/useTask";
+import type { TaskResponse } from "@/types/task.type";
 
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function buildCalendarGrid(year: number, month: number) {
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const startIndex = firstDay.getDay();
-  const totalDays = lastDay.getDate();
-  const weeks: Array<Array<number | null>> = [];
-  let currentDay = 1;
-
-  while (currentDay <= totalDays) {
-    const week: Array<number | null> = Array(7).fill(null);
-
-    for (let i = 0; i < 7; i++) {
-      if ((weeks.length === 0 && i < startIndex) || currentDay > totalDays) {
-        continue;
-      }
-      week[i] = currentDay;
-      currentDay += 1;
-    }
-    weeks.push(week);
-  }
-
-  return weeks;
-}
-
-function formatMonthTitle(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    year: "numeric",
-  }).format(date);
-}
 
 function getDateKey(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 export default function Calendar() {
-  const { tasks, createTask, updateTask } = useTaskContext();
+  const { data: tasks = [] } = useGetAllTasks();
   const [activeDate, setActiveDate] = useState(() => new Date());
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 
   const year = activeDate.getFullYear();
   const month = activeDate.getMonth();
@@ -54,9 +22,11 @@ export default function Calendar() {
   const weeks = useMemo(() => buildCalendarGrid(year, month), [year, month]);
 
   const tasksByDate = useMemo(() => {
-    return tasks.reduce<Record<string, Task[]>>((acc, task) => {
-      acc[task.dueDate] = acc[task.dueDate]
-        ? [...acc[task.dueDate], task]
+    return tasks.reduce<Record<string, TaskResponse[]>>((acc, task) => {
+      if (!task.dueDate) return acc;
+      const dateKey = task.dueDate.split('T')[0];
+      acc[dateKey] = acc[dateKey]
+        ? [...acc[dateKey], task]
         : [task];
       return acc;
     }, {});
@@ -72,32 +42,6 @@ export default function Calendar() {
     setActiveDate(
       (current) => new Date(current.getFullYear(), current.getMonth() + 1, 1),
     );
-  };
-
-  const handleOpenModal = () => {
-    setIsCreateModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsCreateModalOpen(false);
-    setTaskToEdit(null);
-  };
-
-  const handleEditTask = (taskId: string) => {
-    const task = tasks.find((item) => item.id === taskId);
-    if (!task) return;
-    setTaskToEdit(task);
-    setIsCreateModalOpen(true);
-  };
-
-  const handleCreateTask = (payload: NewTaskPayload) => {
-    createTask(payload);
-    handleCloseModal();
-  };
-
-  const handleUpdateTask = (taskId: string, payload: NewTaskPayload) => {
-    updateTask(taskId, payload);
-    handleCloseModal();
   };
 
   return (
@@ -118,13 +62,6 @@ export default function Calendar() {
                 due each day.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleOpenModal}
-              className="inline-flex items-center justify-center rounded-full bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
-            >
-              + New Task
-            </button>
           </div>
         </div>
 
@@ -168,7 +105,7 @@ export default function Calendar() {
 
             <div className="mt-4 grid grid-cols-7 gap-px text-sm text-slate-200">
               {weeks.map((week, index) => (
-                <div key={index} className="grid gap-px">
+                <Fragment key={index}>
                   {week.map((day, dayIndex) => {
                     const isToday =
                       day &&
@@ -207,14 +144,13 @@ export default function Calendar() {
                               <button
                                 key={task.id}
                                 type="button"
-                                onClick={() => handleEditTask(task.id)}
                                 className={`block w-full rounded-2xl p-2 text-left text-sm transition ${statusColor}`}
                               >
                                 <span className="block truncate font-semibold">
                                   {task.title}
                                 </span>
                                 <span className="mt-1 block truncate text-[11px] opacity-80">
-                                  Due {task.dueDate}
+                                  Due {task.dueDate?.split('T')[0]}
                                 </span>
                               </button>
                             );
@@ -228,19 +164,11 @@ export default function Calendar() {
                       </div>
                     );
                   })}
-                </div>
+                </Fragment>
               ))}
             </div>
           </div>
         </div>
-
-        <NewTaskModal
-          open={isCreateModalOpen}
-          onClose={handleCloseModal}
-          onCreateTask={handleCreateTask}
-          onUpdateTask={handleUpdateTask}
-          taskToEdit={taskToEdit}
-        />
       </main>
     </div>
   );

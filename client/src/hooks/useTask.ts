@@ -1,6 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { taskApi } from "@/apis/task.api"
+
 import type { TaskStatus, TaskRequest, TaskResponse } from "@/types/task.type"
+
+export const useGetAllTasks = (title?: string, status?: string) => {
+    return useQuery({
+        queryKey: ['tasks', 'all', title, status],
+        queryFn: async (): Promise<TaskResponse[]> => {
+            const res = await taskApi.getAllTasks(title, status);
+            return res.data.data ?? [];
+        },
+    })
+}
 
 export const useGetTasks = (projectId: number) => {
     return useQuery({
@@ -24,37 +35,47 @@ export const useCreateTask = (projectId: number) => {
     })
 }
 
-export const useUpdateTask = (projectId: number) => {
+export const useUpdateTask = (defaultProjectId: number) => {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: ({ id, data }: { id: number; data: TaskRequest }) => 
-            taskApi.updateTasks(projectId, id, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
+        mutationFn: ({ id, data, projectId }: { id: number; data: TaskRequest; projectId?: number }) => 
+            taskApi.updateTasks(projectId || defaultProjectId, id, data),
+        onSuccess: (_, variables) => {
+            const pid = variables.projectId || defaultProjectId;
+            queryClient.invalidateQueries({ queryKey: ['tasks', pid] });
+            queryClient.invalidateQueries({ queryKey: ['tasks', 'all'] });
         }
     })
 }
 
-export const useUpdateTaskStatus = (projectId: number) => {
+export const useUpdateTaskStatus = (defaultProjectId: number) => {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: ({ id, status }: { id: number; status: TaskStatus }) => 
-            taskApi.updateTaskStatus(projectId, id, status),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
+        mutationFn: ({ id, status, projectId }: { id: number; status: TaskStatus; projectId?: number }) => 
+            taskApi.updateTaskStatus(projectId || defaultProjectId, id, status),
+        onSuccess: (_, variables) => {
+            const pid = variables.projectId || defaultProjectId;
+            queryClient.invalidateQueries({ queryKey: ['tasks', pid] });
+            queryClient.invalidateQueries({ queryKey: ['tasks', 'all'] });
         }
     })
 }
 
-export const useDeleteTask = (projectId: number) => {
+export const useDeleteTask = (defaultProjectId: number) => {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (id: number) => taskApi.deleteTasks(projectId, id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
+        mutationFn: (args: number | { id: number; projectId?: number }) => {
+            const id = typeof args === 'number' ? args : args.id;
+            const projectId = typeof args === 'number' ? defaultProjectId : (args.projectId || defaultProjectId);
+            return taskApi.deleteTasks(projectId, id);
+        },
+        onSuccess: (_, args) => {
+            const pid = typeof args === 'number' ? defaultProjectId : (args.projectId || defaultProjectId);
+            queryClient.invalidateQueries({ queryKey: ['tasks', pid] });
+            queryClient.invalidateQueries({ queryKey: ['tasks', 'all'] });
         }
     })
 }

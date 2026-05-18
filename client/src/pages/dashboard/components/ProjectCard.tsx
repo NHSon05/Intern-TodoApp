@@ -1,7 +1,7 @@
 import TaskCard from "@/pages/dashboard/components/TaskCard";
 import { TASK_STATUSES, STATUS_DOT_STYLES } from "@/constants/taskStatus";
-import type { TaskRequest, TaskResponse } from "@/types/task.type";
-import { useCreateTask, useDeleteTask, useGetTasks, useUpdateTask } from "@/hooks/useTask";
+import type { TaskRequest, TaskResponse, TaskStatus } from "@/types/task.type";
+import { useCreateTask, useDeleteTask, useGetTasks, useUpdateTask, useUpdateTaskStatus } from "@/hooks/useTask";
 import { useMemo, useState } from "react";
 import TaskPopUp from "./TaskPopUp";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ export default function ProjectCard({
   const createTasks = useCreateTask(projectId);
   const updateTasks = useUpdateTask(projectId);
   const deleteTasks = useDeleteTask(projectId);
+  const updateTaskStatus = useUpdateTaskStatus(projectId);
 
   const [taskPopUpOpen, setTaskPopUpOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<TaskResponse | null>(null);
@@ -81,6 +82,15 @@ export default function ProjectCard({
       toast.success("Task deleted!");
     } catch (error) {
       toast.error("Failed to delete task");
+      console.error(error)
+    }
+  };
+
+  const handleUpdateStatus = async (taskId: number, status: TaskStatus) => {
+    try {
+      await updateTaskStatus.mutateAsync({ id: taskId, status });
+    } catch (error) {
+      toast.error("Failed to update task");
       console.error(error)
     }
   };
@@ -151,8 +161,23 @@ export default function ProjectCard({
             <div className="flex gap-6 overflow-x-auto h-[60vh] pb-4 custom-scrollbar">
               {TASK_STATUSES.map((status) => {
                 const statusTasks = tasksByStatus[status] ?? [];
+                const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+                  e.preventDefault();
+                };
+                const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+                  e.preventDefault();
+                  const droppedTaskId = e.dataTransfer.getData("taskId");
+                  if (droppedTaskId) {
+                    handleUpdateStatus(Number(droppedTaskId), status);
+                  }
+                };
                 return (
-                  <div key={status} className="space-y-4 min-w-[280px] sm:min-w-[320px] shrink-0">
+                  <div
+                    key={status}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    className="space-y-4 min-w-[280px] sm:min-w-[320px] shrink-0"
+                  >
                     <div className="flex items-center gap-2">
                       <div className={`h-2 w-2 rounded-full ${STATUS_DOT_STYLES[status]}`} />
                       <h3 className="text-sm font-semibold text-slate-300">{status}</h3>
