@@ -14,7 +14,7 @@ enum TaskStatus {
   REMIND
   REMINDED
   DONE
-  CANCELLED
+  CLOSED
 }
 model User {
   id        Int       @id @default(autoincrement())

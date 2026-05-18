@@ -38,27 +38,29 @@ const createTasks = async (req, res) => {
     }
 };
 
-// GET /projects/:projectId/tasks
+// GET /projects/:projectId/tasks or GET /tasks
 const getTasks = async (req, res) => {
     try {
         const { projectId } = req.params;
-        const { title, status, page } = req.query;
+        const { title, status, page, limit: queryLimit } = req.query;
 
-        const project = await prisma.project.findFirst({
-            where: { id: parseInt(projectId), userId: req.user.userId },
-        });
-        if (!project) {
-            return res.status(404).json({ success: false, message: "Project not found" });
+        if (projectId) {
+            const project = await prisma.project.findFirst({
+                where: { id: parseInt(projectId), userId: req.user.userId },
+            });
+            if (!project) {
+                return res.status(404).json({ success: false, message: "Project not found" });
+            }
         }
 
-        const limit = 10;
+        const limit = queryLimit ? parseInt(queryLimit) : 10;
         const currentPage = parseInt(page) || 1;
         const skip = (currentPage - 1) * limit;
 
         const whereCondition = {
-            projectId: parseInt(projectId),
             userId: req.user.userId,
         };
+        if (projectId) whereCondition.projectId = parseInt(projectId);
         if (title)  whereCondition.title  = { contains: title };
         if (status) whereCondition.status = status;
 
